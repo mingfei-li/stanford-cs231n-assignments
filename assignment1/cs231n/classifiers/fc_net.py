@@ -55,7 +55,10 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        self.params['W1'] = np.random.normal(loc=0, scale=weight_scale, size=(input_dim, hidden_dim))
+        self.params['b1'] = np.zeros((hidden_dim,))
+        self.params['W2'] = np.random.normal(loc=0, scale=weight_scale, size=(hidden_dim, num_classes))
+        self.params['b2'] = np.zeros((num_classes,))
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -88,7 +91,10 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        X, cache_affine_1 = affine_forward(X, self.params['W1'], self.params['b1'])
+        X, cache_relu = relu_forward(X)
+        X, cache_affine_2 = affine_forward(X, self.params['W2'], self.params['b2'])
+        scores = X
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -112,7 +118,14 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        loss, dX = softmax_loss(X, y)
+        dX, grads['W2'], grads['b2'] = affine_backward(dX, cache_affine_2)
+        dX = relu_backward(dX, cache_relu)
+        dX, grads['W1'], grads['b1'] = affine_backward(dX, cache_affine_1)
+
+        for param in ['W1', 'W2']:
+          loss += self.reg * 0.5 * np.sum(self.params[param] ** 2)
+          grads[param] += self.reg * self.params[param]
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
