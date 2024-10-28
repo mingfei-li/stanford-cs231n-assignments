@@ -6,6 +6,7 @@ from builtins import range
 from builtins import object
 import os
 import pickle as pickle
+from tqdm import tqdm
 
 import numpy as np
 
@@ -259,7 +260,7 @@ class Solver(object):
         iterations_per_epoch = max(num_train // self.batch_size, 1)
         num_iterations = self.num_epochs * iterations_per_epoch
 
-        for t in range(num_iterations):
+        for t in tqdm(range(num_iterations)):
             self._step()
 
             # Maybe print training loss
