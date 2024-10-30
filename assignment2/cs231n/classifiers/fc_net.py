@@ -74,7 +74,13 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        layer_dims = [input_dim] + hidden_dims + [num_classes]
+        for i in range(1, self.num_layers + 1):
+            self.params[f'W{i}'] = np.random.randn(
+                layer_dims[i-1],
+                layer_dims[i],
+            ) * weight_scale
+            self.params[f'b{i}'] = np.zeros((layer_dims[i],))
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -148,7 +154,12 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        cache = {}
+        for i in range(1, self.num_layers + 1):
+            X, cache[f'affine{i}'] = affine_forward(X, self.params[f'W{i}'], self.params[f'b{i}'])
+            if i < self.num_layers:
+                X, cache[f'relu{i}'] = relu_forward(X)
+        scores = X
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -175,7 +186,15 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        loss, dX = softmax_loss(X, y)
+        for i in range(self.num_layers, 0, -1):
+            if i < self.num_layers:
+                dX = relu_backward(dX, cache[f'relu{i}'])
+            dX, grads[f'W{i}'], grads[f'b{i}'] = affine_backward(dX, cache[f'affine{i}'])
+
+        for i in range(1, self.num_layers + 1):
+            loss += 0.5 * self.reg * np.sum(self.params[f'W{i}'] ** 2)
+            grads[f'W{i}'] += self.reg * self.params[f'W{i}']
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
