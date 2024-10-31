@@ -159,6 +159,8 @@ class FullyConnectedNet(object):
             X, cache[f'affine{i}'] = affine_forward(X, self.params[f'W{i}'], self.params[f'b{i}'])
             if i < self.num_layers:
                 X, cache[f'relu{i}'] = relu_forward(X)
+                if self.use_dropout:
+                    X, cache[f'dropout{i}'] = dropout_forward(X, self.dropout_param)
         scores = X
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -189,6 +191,8 @@ class FullyConnectedNet(object):
         loss, dX = softmax_loss(X, y)
         for i in range(self.num_layers, 0, -1):
             if i < self.num_layers:
+                if self.use_dropout:
+                    dX = dropout_backward(dX, cache[f'dropout{i}'])
                 dX = relu_backward(dX, cache[f'relu{i}'])
             dX, grads[f'W{i}'], grads[f'b{i}'] = affine_backward(dX, cache[f'affine{i}'])
 
