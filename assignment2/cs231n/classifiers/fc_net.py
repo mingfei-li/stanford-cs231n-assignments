@@ -81,6 +81,9 @@ class FullyConnectedNet(object):
                 layer_dims[i],
             ) * weight_scale
             self.params[f'b{i}'] = np.zeros((layer_dims[i],))
+            if self.normalization == "batchnorm" and i < self.num_layers:
+                self.params[f'gamma{i}'] = np.ones((layer_dims[i],))
+                self.params[f'beta{i}'] = np.zeros((layer_dims[i],))
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -158,6 +161,13 @@ class FullyConnectedNet(object):
         for i in range(1, self.num_layers + 1):
             X, cache[f'affine{i}'] = affine_forward(X, self.params[f'W{i}'], self.params[f'b{i}'])
             if i < self.num_layers:
+                if self.normalization == "batchnorm":
+                    X, cache[f'batchnorm{i}'] = batchnorm_forward(
+                        X,
+                        self.params[f'gamma{i}'],
+                        self.params[f'beta{i}'],
+                        self.bn_params[i - 1],
+                    )
                 X, cache[f'relu{i}'] = relu_forward(X)
                 if self.use_dropout:
                     X, cache[f'dropout{i}'] = dropout_forward(X, self.dropout_param)
@@ -194,6 +204,11 @@ class FullyConnectedNet(object):
                 if self.use_dropout:
                     dX = dropout_backward(dX, cache[f'dropout{i}'])
                 dX = relu_backward(dX, cache[f'relu{i}'])
+                if self.normalization == "batchnorm":
+                    dX, grads[f'gamma{i}'], grads[f'beta{i}'] = batchnorm_backward_alt(
+                        dX,
+                        cache[f'batchnorm{i}'],
+                    )
             dX, grads[f'W{i}'], grads[f'b{i}'] = affine_backward(dX, cache[f'affine{i}'])
 
         for i in range(1, self.num_layers + 1):
