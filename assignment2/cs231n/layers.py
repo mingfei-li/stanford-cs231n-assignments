@@ -369,7 +369,11 @@ def layernorm_forward(x, gamma, beta, ln_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    mu = np.mean(x, axis=1, keepdims=True)
+    v = np.mean((x - mu)**2, axis=1, keepdims=True)
+    y = (x - mu) / np.sqrt(v + eps)
+    out = gamma * y + beta
+    cache = (x, gamma, beta, mu, v, y, eps)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -404,7 +408,25 @@ def layernorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    d = dout.shape[1]
+    x, gamma, beta, mu, v, y, eps = cache
+
+    dgamma = np.sum(y * dout, axis=0) # shape (D,)
+    dbeta = np.sum(dout, axis=0) # shape (D,)
+
+    dy = gamma * dout # shape (N, D)
+
+    dydv = -(x - mu) / (2 * np.sqrt(v + eps)**3) # shape (N, D)
+    dv = np.sum(dy * dydv, axis=1, keepdims=True) # shape (N, 1)
+
+    dydmu = -1 / np.sqrt(v + eps) # shape (N, 1)
+    dmu = np.sum(dy * dydmu, axis=1, keepdims=True) # shape (N, 1)
+
+    dydx = 1 / np.sqrt(v + eps) # shape (N, 1)
+    dvdx = 2 * (x - mu) / d # shape (N, D)
+    dmudx = 1 / d # scaler
+
+    dx = dy * dydx + dv * dvdx + dmu * dmudx
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
