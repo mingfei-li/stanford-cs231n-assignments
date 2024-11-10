@@ -863,7 +863,14 @@ def spatial_groupnorm_forward(x, gamma, beta, G, gn_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    n = x.shape[0]
+    x_hat = x.reshape(n * G, -1)
+    mu = np.mean(x_hat, axis=-1, keepdims=True)
+    v = np.mean((x_hat - mu)**2, axis=-1, keepdims=True)
+    y_hat = (x_hat - mu) / np.sqrt(v + eps)
+    y = y_hat.reshape(x.shape)
+    out = y * gamma + beta
+    cache = (x, mu, v, y, gamma, beta, G, eps)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -893,7 +900,29 @@ def spatial_groupnorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, mu, v, y, gamma, beta, G, eps = cache
+    n = x.shape[0]
+    d = x.shape[1] * x.shape[2] * x.shape[3] // G
+    x_hat = x.reshape(n * G, -1)
+    y_hat = y.reshape(n * G, -1)
+
+    dy = gamma * dout
+    dgamma = np.sum(dout * y, axis=(0, 2, 3), keepdims=True)
+    dbeta = np.sum(dout, axis=(0, 2, 3), keepdims=True)
+    
+    dy_hatdx_hat = 1 / np.sqrt(v + eps)
+    dy_hatdmu = -1 / np.sqrt(v + eps)
+    dy_hatdv = -(x_hat - mu) / (2 * np.sqrt(v + eps)**3)
+
+    dvdx_hat = 2 / d * (x_hat - mu)
+    dmudx_hat = 1 / d
+
+    dy_hat = dy.reshape(y_hat.shape)
+    dv = np.sum(dy_hat * dy_hatdv, axis=-1, keepdims=True)
+    dmu = np.sum(dy_hat * dy_hatdmu, axis=-1, keepdims=True)
+
+    dx_hat = dy_hat * dy_hatdx_hat + dv * dvdx_hat + dmu * dmudx_hat
+    dx = dx_hat.reshape(x.shape)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
