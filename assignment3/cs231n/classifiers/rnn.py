@@ -148,7 +148,22 @@ class CaptioningRNN:
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        h0, cache_proj = affine_forward(features, W_proj, b_proj)
+        x, cache_embed = word_embedding_forward(captions_in, W_embed)
+        h, cache_rnn = rnn_forward(x, h0, Wx, Wh, b)
+        out, cache_vocab = temporal_affine_forward(h, W_vocab, b_vocab)
+
+        loss, dout = temporal_softmax_loss(out, captions_out, mask)
+
+        dh, dW_vocab, db_vocab = temporal_affine_backward(dout, cache_vocab)
+        dx, dh0, dWx, dWh, db = rnn_backward(dh, cache_rnn)
+        _, dW_proj, db_proj = affine_backward(dh0, cache_proj)
+        dW_embed = word_embedding_backward(dx, cache_embed)
+
+        grads['W_proj'], grads['b_proj'] = dW_proj, db_proj
+        grads['W_embed'] = dW_embed
+        grads['Wx'], grads['Wh'], grads['b'] = dWx, dWh, db
+        grads['W_vocab'], grads['b_vocab'] = dW_vocab, db_vocab
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -216,7 +231,15 @@ class CaptioningRNN:
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        x = self._start * np.ones((N,), dtype=int)
+        h, _ = affine_forward(features, W_proj, b_proj)
+        for i in range(max_length):
+          x, _ = word_embedding_forward(x, W_embed)
+          h, _ = rnn_step_forward(x, h, Wx, Wh, b)
+          y, _ = affine_forward(h, W_vocab, b_vocab)
+          x = np.argmax(y, axis=1)
+          captions[:,i] = x
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
