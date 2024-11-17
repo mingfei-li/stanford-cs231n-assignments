@@ -38,7 +38,18 @@ class PositionalEncoding(nn.Module):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # loop based implementation
+        # base = 10000 ** (-1 / (embed_dim/2))
+        # for i in range(max_len):
+        #   for j in range(0, embed_dim//2):
+        #     pe[0, i, 2*j] = math.sin(i * (base**j))
+        #     pe[0, i, 2*j+1] = math.cos(i * (base**j))
+
+        # tensor broadcast based implementation 
+        pos = torch.arange(0, max_len).view(-1, 1)
+        dim = (10000 ** (-torch.arange(0, embed_dim//2) / (embed_dim/2))).view(1, -1)
+        pe[0, :, 0::2] = torch.sin(pos * dim)
+        pe[0, :, 1::2] = torch.cos(pos * dim)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -70,7 +81,7 @@ class PositionalEncoding(nn.Module):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        output = self.dropout(x + self.pe[:, :S, :])
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -164,13 +175,6 @@ class MultiHeadAttention(nn.Module):
         #     function masked_fill may come in handy.                              #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        print('---Q---')
-        print(self.query(query))
-        print('---K---')
-        print(self.key(key))
-        print('---V---')
-        print(self.value(value))
 
         Q = self.query(query).view(N, S, self.n_head, self.head_dim).transpose(1, 2)
         K = self.key(key).view(N, T, self.n_head, self.head_dim).transpose(1, 2)
