@@ -3,3 +3,4 @@
 /assignment1/cs231n/__pycache__
 *.pyc
 *.h5
+assignment3/data/cifar-10-python.tar.gz
